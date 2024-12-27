@@ -1,0 +1,131 @@
+--------------------------------------------------------------
+-- Reference:
+-- Practical SQL: A Beginner's Guide to Storytelling with Data
+-- by Anthony DeBarros
+
+--------------------------------------------------------------
+
+
+-- Connecting psql to a database on a local server
+psql -d analysis -U postgres
+
+
+-- Changing user and database name
+\c gis_analysis postgres
+
+
+-- Running SQL Queries on psql
+-- 16-1: Entering a single-line query in psql
+SELECT geo_name FROM us_counties_2010 LIMIT 3;
+
+
+-- Entering a Multiline Query
+-- 16-2: Entering a multi-line query in psql
+SELECT geo_name
+FROM us_counties_2010
+LIMIT 3;
+
+
+-- Checking for Open Parentheses in the psql Prompt
+-- 16-3: Showing open parentheses in the psql prompt
+CREATE TABLE wineries (
+id bigint,
+winery_name varchar(100)
+);
+
+
+-- Editing Queries
+-- Enter \e to open the last-executed query in a text editor (Notepad for window)
+
+
+-- Navigating and Formatting Results
+-- Setting Paging of Results
+-- 16-4: A query with scrolling results
+SELECT geo_name FROM us_counties_2010;
+--  Using \pset pager meta-command to turn off and on paging
+
+
+-- Formatting the Results Grid
+-- Use the \pset meta-command with the options to format how the results look
+
+
+-- Viewing Expanded Results
+-- 16-5 Normal display of the grades table query
+SELECT * FROM grades;
+
+
+-- \x to toggle expanded on/off
+-- 16-6: Expanded display of the grades table query
+SELECT * FROM grades;
+
+
+-- Meta-Commands for Database Information
+-- \dt+ to list all tables in the database and their size
+-- \dt+ us* to show only tables whose names begin with us
+/*
+\d [pattern] Columns, data types, plus other information on objects
+\di [pattern] Indexes and their associated tables
+\dt [pattern] Tables and the account that owns them
+\du [pattern] User accounts and their attributes
+\dv [pattern] Views and the account that owns them
+\dx [pattern] Installed extensions
+*/
+
+
+-- Importing, Exporting, and Using Files
+-- Using \copy for Import and Export
+-- 16-7: Importing data using \copy
+DROP TABLE state_regions;
+
+CREATE TABLE state_regions (
+    st varchar(2) CONSTRAINT st_key PRIMARY KEY,
+    region varchar(20) NOT NULL
+);
+
+\copy state_regions FROM 'C:/Users/QDS/PostgreSQL_Projects/state_regions.csv' WITH (FORMAT CSV, HEADER);
+
+-- Saving Query Output to a File
+-- 16-8: Saving query output to a file
+\a \f , \pset footer -- Enter psql settings
+
+SELECT * FROM grades; -- The query
+
+\o 'C:/Users/QDS/PostgreSQL_Projects/query_output.csv' -- Send that data to a file the next time you run the query
+
+-- When you run the SELECT query again, there should be no output to the screen
+-- Instead, you’ll find a file with the contents of the query in the specified directory
+SELECT * FROM grades;
+
+
+-- Reading and Executing SQL Stored in a File
+-- Let’s say you saved the SELECT * FROM grades; query in a file called displaygrades.sql. 
+-- To run the saved query, use the following psql syntax at your command line:
+psql -d analysis -U postgres -f display-grades.sql
+
+
+-- Additional Command Line Utilities to Expedite Tasks
+-- Adding a Database with createdb
+-- -e argument (for “echo”) tells the command to print the SQL statement to the screen.
+createdb -U postgres -e box_office -- = CREATE DATABASE box_office;
+psql -d box_office -U postgres -- Connect to the new database
+
+
+-- Loading Shapefiles with shp2pgsql
+/*
+To import a shapefile into a new table from the command line
+shp2pgsql -I -s SRID -W encoding shapefile_name table_name | psql -d database -U user
+
+-I Adds a GiST index on the new table’s geometry column.
+-s Lets you specify an SRID for the geometric data.
+-W Lets you specify encoding. (Recall that we used Latin1 for census shapefiles.)
+shapefile_name The name (including full path) of the file ending with the .shp extension
+table_name The name of the table the shapefile is imported to
+*/
+
+
+-- Load the tl_2010_us_county10.shp shapefile into a us_counties_2010_shp table in the gis_analysis database, as you did in Chapter 14
+shp2pgsql -I -s 4269 -W Latin1 tl_2010_us_county10.shp us_counties_2010_shp | psql -d gis_analysis -U postgres
+
+-- For the Santa Fe roads and waterways shapfiles in Chapter 14:
+shp2pgsql -I -s 4269 tl_2016_35049_roads.shp santafe_roads_2016 | psql -d gis_analysis -U postgres
+shp2pgsql -I -s 4269 tl_2016_35049_linearwater.shp santafe_linearwater_2016 | psql -d gis_analysis -U postgres
